@@ -6,6 +6,8 @@ import pickle
 app = Flask(__name__)
 reading_filepath = 'models/logistic_regression.pkl'
 model = pickle.load(open(reading_filepath,'rb'))
+VISITS_LAST_YEAR = 'VisitsLastYear'
+QUESTION_TEXT_LENGTH = 'QuestionTextLength'
 
 class InputSchema(Schema):
     VisitsLastYear = fields.Integer(required=True)
@@ -17,10 +19,8 @@ input_schema = InputSchema()
 def predict():
     if request.is_json:
         data = request.get_json()
-        sanity_check = input_schema.load(data)
-        if sanity_check:
-            abort(400)
-        features = np.array([data['VisitsLastYear'], data['QuestionTextLength']]).reshape(1, -1)
+        valid_data = input_schema.load(data)
+        features = np.array([valid_data[VISITS_LAST_YEAR], valid_data[QUESTION_TEXT_LENGTH]]).reshape(1, -1)
         prediction_proba = model.predict_proba(features)
         prediction_proba_class_1 = float(prediction_proba[0][1])
         return jsonify(PredictionProbabilityClass1=prediction_proba_class_1)
